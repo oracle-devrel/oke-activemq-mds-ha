@@ -1,0 +1,104 @@
+apiVersion: v1
+data:
+  jetty.xml: "    <!--\n        Licensed to the Apache Software Foundation (ASF) under
+    one or more contributor\n        license agreements. See the NOTICE file distributed
+    with this work for additional\n        information regarding copyright ownership.
+    The ASF licenses this file to You under\n        the Apache License, Version 2.0
+    (the \"License\"); you may not use this file except in\n        compliance with
+    the License. You may obtain a copy of the License at\n\n        http://www.apache.org/licenses/LICENSE-2.0
+    Unless required by applicable law or\n        agreed to in writing, software distributed
+    under the License is distributed on an\n        \"AS IS\" BASIS, WITHOUT WARRANTIES
+    OR CONDITIONS OF ANY KIND, either express or\n        implied. See the License
+    for the specific language governing permissions and\n        limitations under
+    the License.\n    -->\n    <!--\n        An embedded servlet engine for serving
+    up the Admin consoles, REST and Ajax APIs and\n        some demos Include this
+    file in your configuration to enable ActiveMQ web components\n        e.g. <import
+    resource=\"jetty.xml\"/>\n    -->\n<beans xmlns=\"http://www.springframework.org/schema/beans\"
+    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd\">\n\n    <bean id=\"securityLoginService\"
+    class=\"org.eclipse.jetty.security.HashLoginService\">\n        <property name=\"name\"
+    value=\"ActiveMQRealm\" />\n        <property name=\"config\" value=\"${activemq.conf}/jetty-realm.properties\"
+    />\n    </bean>\n\n    <bean id=\"securityConstraint\" class=\"org.eclipse.jetty.util.security.Constraint\">\n
+    \       <property name=\"name\" value=\"BASIC\" />\n        <property name=\"roles\"
+    value=\"user,admin\" />\n        <!-- set authenticate=false to disable login
+    -->\n        <property name=\"authenticate\" value=\"true\" />\n    </bean>\n
+    \   <bean id=\"adminSecurityConstraint\" class=\"org.eclipse.jetty.util.security.Constraint\">\n
+    \       <property name=\"name\" value=\"BASIC\" />\n        <property name=\"roles\"
+    value=\"admin\" />\n         <!-- set authenticate=false to disable login -->\n
+    \       <property name=\"authenticate\" value=\"true\" />\n    </bean>\n    <bean
+    id=\"securityConstraintMapping\" class=\"org.eclipse.jetty.security.ConstraintMapping\">\n
+    \       <property name=\"constraint\" ref=\"securityConstraint\" />\n        <property
+    name=\"pathSpec\" value=\"/*,/api/*,/admin/*,*.jsp\" />\n    </bean>\n    <bean
+    id=\"adminSecurityConstraintMapping\" class=\"org.eclipse.jetty.security.ConstraintMapping\">\n
+    \       <property name=\"constraint\" ref=\"adminSecurityConstraint\" />\n        <property
+    name=\"pathSpec\" value=\"*.action\" />\n    </bean>\n\n    <bean id=\"rewriteHandler\"
+    class=\"org.eclipse.jetty.rewrite.handler.RewriteHandler\">\n        <property
+    name=\"rules\">\n            <list>\n                <bean id=\"header\" class=\"org.eclipse.jetty.rewrite.handler.HeaderPatternRule\">\n
+    \                 <property name=\"pattern\" value=\"*\"/>\n                  <property
+    name=\"name\" value=\"X-FRAME-OPTIONS\"/>\n                  <property name=\"value\"
+    value=\"SAMEORIGIN\"/>\n                </bean>\n                <bean id=\"header\"
+    class=\"org.eclipse.jetty.rewrite.handler.HeaderPatternRule\">\n                  <property
+    name=\"pattern\" value=\"*\"/>\n                  <property name=\"name\" value=\"X-XSS-Protection\"/>\n
+    \                 <property name=\"value\" value=\"1; mode=block\"/>\n                </bean>\n
+    \               <bean id=\"header\" class=\"org.eclipse.jetty.rewrite.handler.HeaderPatternRule\">\n
+    \                 <property name=\"pattern\" value=\"*\"/>\n                  <property
+    name=\"name\" value=\"X-Content-Type-Options\"/>\n                  <property
+    name=\"value\" value=\"nosniff\"/>\n                </bean>\n            </list>\n
+    \       </property>\n    </bean>\n\n\t<bean id=\"secHandlerCollection\" class=\"org.eclipse.jetty.server.handler.HandlerCollection\">\n\t\t<property
+    name=\"handlers\">\n\t\t\t<list>\n   \t            <ref bean=\"rewriteHandler\"/>\n\t\t\t\t<bean
+    class=\"org.eclipse.jetty.webapp.WebAppContext\">\n\t\t\t\t\t<property name=\"contextPath\"
+    value=\"/admin\" />\n\t\t\t\t\t<property name=\"resourceBase\" value=\"${activemq.home}/webapps/admin\"
+    />\n\t\t\t\t\t<property name=\"logUrlOnStart\" value=\"true\" />\n\t\t\t\t</bean>\n\t\t\t\t<bean
+    class=\"org.eclipse.jetty.webapp.WebAppContext\">\n\t\t\t\t\t<property name=\"contextPath\"
+    value=\"/api\" />\n\t\t\t\t\t<property name=\"resourceBase\" value=\"${activemq.home}/webapps/api\"
+    />\n\t\t\t\t\t<property name=\"logUrlOnStart\" value=\"true\" />\n\t\t\t\t</bean>\n\t\t\t\t<bean
+    class=\"org.eclipse.jetty.server.handler.ResourceHandler\">\n\t\t\t\t\t<property
+    name=\"directoriesListed\" value=\"false\" />\n\t\t\t\t\t<property name=\"welcomeFiles\">\n\t\t\t\t\t\t<list>\n\t\t\t\t\t\t\t<value>index.html</value>\n\t\t\t\t\t\t</list>\n\t\t\t\t\t</property>\n\t\t\t\t\t<property
+    name=\"resourceBase\" value=\"${activemq.home}/webapps/\" />\n\t\t\t\t</bean>\n\t\t\t\t<bean
+    id=\"defaultHandler\" class=\"org.eclipse.jetty.server.handler.DefaultHandler\">\n\t\t\t\t\t<property
+    name=\"serveIcon\" value=\"false\" />\n\t\t\t\t</bean>\n\t\t\t</list>\n\t\t</property>\n\t</bean>\n
+    \   <bean id=\"securityHandler\" class=\"org.eclipse.jetty.security.ConstraintSecurityHandler\">\n
+    \       <property name=\"loginService\" ref=\"securityLoginService\" />\n        <property
+    name=\"authenticator\">\n            <bean class=\"org.eclipse.jetty.security.authentication.BasicAuthenticator\"
+    />\n        </property>\n        <property name=\"constraintMappings\">\n            <list>\n
+    \               <ref bean=\"adminSecurityConstraintMapping\" />\n                <ref
+    bean=\"securityConstraintMapping\" />\n            </list>\n        </property>\n
+    \       <property name=\"handler\" ref=\"secHandlerCollection\" />\n    </bean>\n\n
+    \   <bean id=\"contexts\" class=\"org.eclipse.jetty.server.handler.ContextHandlerCollection\">\n
+    \   </bean>\n\n    <bean id=\"jettyPort\" class=\"org.apache.activemq.web.WebConsolePort\"
+    init-method=\"start\">\n             <!-- the default port number for the web
+    console -->\n        <property name=\"host\" value=\"0.0.0.0\"/>\n        <property
+    name=\"port\" value=\"8161\"/>\n    </bean>\n\n    <bean id=\"Server\" depends-on=\"jettyPort\"
+    class=\"org.eclipse.jetty.server.Server\"\n        destroy-method=\"stop\">\n\n
+    \       <property name=\"handler\">\n            <bean id=\"handlers\" class=\"org.eclipse.jetty.server.handler.HandlerCollection\">\n
+    \               <property name=\"handlers\">\n                    <list>\n                        <ref
+    bean=\"contexts\" />\n                        <ref bean=\"securityHandler\" />\n
+    \                   </list>\n                </property>\n            </bean>\n
+    \       </property>\n\n    </bean>\n\n    <bean id=\"invokeConnectors\" class=\"org.springframework.beans.factory.config.MethodInvokingFactoryBean\">\n
+    \   \t<property name=\"targetObject\" ref=\"Server\" />\n    \t<property name=\"targetMethod\"
+    value=\"setConnectors\" />\n    \t<property name=\"arguments\">\n    \t<list>\n
+    \          \t<bean id=\"Connector\" class=\"org.eclipse.jetty.server.ServerConnector\">\n
+    \          \t\t<constructor-arg ref=\"Server\" />\n                    <!-- see
+    the jettyPort bean -->\n                   <property name=\"host\" value=\"#{systemProperties['jetty.host']}\"
+    />\n                   <property name=\"port\" value=\"#{systemProperties['jetty.port']}\"
+    />\n               </bean>\n                <!--\n                    Enable this
+    connector if you wish to use https with web console\n                -->\n                <!--
+    bean id=\"SecureConnector\" class=\"org.eclipse.jetty.server.ServerConnector\">\n\t\t\t\t\t<constructor-arg
+    ref=\"Server\" />\n\t\t\t\t\t<constructor-arg>\n\t\t\t\t\t\t<bean id=\"handlers\"
+    class=\"org.eclipse.jetty.util.ssl.SslContextFactory\">\n\n\t\t\t\t\t\t\t<property
+    name=\"keyStorePath\" value=\"${activemq.conf}/broker.ks\" />\n\t\t\t\t\t\t\t<property
+    name=\"keyStorePassword\" value=\"password\" />\n\t\t\t\t\t\t</bean>\n\t\t\t\t\t</constructor-arg>\n\t\t\t\t\t<property
+    name=\"port\" value=\"8162\" />\n\t\t\t\t</bean -->\n            </list>\n    \t</property>\n
+    \   </bean>\n\n\t<bean id=\"configureJetty\" class=\"org.springframework.beans.factory.config.MethodInvokingFactoryBean\">\n\t\t<property
+    name=\"staticMethod\" value=\"org.apache.activemq.web.config.JspConfigurer.configureJetty\"
+    />\n\t\t<property name=\"arguments\">\n\t\t\t<list>\n\t\t\t\t<ref bean=\"Server\"
+    />\n\t\t\t\t<ref bean=\"secHandlerCollection\" />\n\t\t\t</list>\n\t\t</property>\n\t</bean>\n\n
+    \   <bean id=\"invokeStart\" class=\"org.springframework.beans.factory.config.MethodInvokingFactoryBean\"\n
+    \   \tdepends-on=\"configureJetty, invokeConnectors\">\n    \t<property name=\"targetObject\"
+    ref=\"Server\" />\n    \t<property name=\"targetMethod\" value=\"start\" />\n
+    \   </bean>\n\n</beans>\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: jetty-cm
+  namespace: active-mq
