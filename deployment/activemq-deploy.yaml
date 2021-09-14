@@ -1,0 +1,128 @@
+#Copyright (c) 2021 Oracle
+
+# The Universal Permissive License (UPL), Version 1.0
+
+# Subject to the condition set forth below, permission is hereby granted to any
+# person obtaining a copy of this software, associated documentation and/or data
+# (collectively the "Software"), free of charge and under any and all copyright
+# rights in the Software, and any and all patent rights owned or freely
+# licensable by each licensor hereunder covering either (i) the unmodified
+# Software as contributed to or provided by such licensor, or (ii) the Larger
+# Works (as defined below), to deal in both
+
+# (a) the Software, and
+# (b) any piece of software and/or hardware listed in the lrgrwrks.txt file if
+# one is included with the Software (each a "Larger Work" to which the Software
+# is contributed by such licensors),
+
+# without restriction, including without limitation the rights to copy, create
+# derivative works of, display, perform, and distribute the Software and make,
+# use, sell, offer for sale, import, export, have made, and have sold the
+# Software and the Larger Work(s), and to sublicense the foregoing rights on
+# either these or other terms.
+
+# This license is subject to the following condition:
+# The above copyright notice and either this complete permission notice or at
+# a minimum a reference to the UPL must be included in all copies or
+# substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: active-mq
+  name: active-mq
+  namespace: active-mq
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: active-mq
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: active-mq
+    spec:
+      imagePullSecrets:
+        - name: ocir-secret
+      initContainers:
+      - image: iad.ocir.io/orasenatdpltintegration03/jph/busybox
+        name: jar-getter
+        command: ["/bin/sh", "-c"]
+        args:
+        - "wget -O /work-dir/mysql-connector-java-8.0.26.tar.gz https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.26.tar.gz; tar -xf /work-dir/mysql-connector-java-8.0.26.tar.gz --directory=/work-dir"
+        volumeMounts:
+        - name: workdir
+          mountPath: "/work-dir"
+      containers:
+      - image: iad.ocir.io/orasenatdpltintegration03/jph/activemq
+        imagePullPolicy: Always
+        name: activemq
+        ports:
+        - containerPort: 61616
+          name: jmx
+          protocol: TCP
+        - containerPort: 8161
+          name: ui
+          protocol: TCP
+        - containerPort: 61616
+          name: openwire
+          protocol: TCP
+        - containerPort: 5672
+          name: amqp
+          protocol: TCP
+        - containerPort: 61613
+          name: stomp
+          protocol: TCP
+        - containerPort: 1883
+          name: mqtt
+          protocol: TCP
+        resources:
+          requests:
+            memory: 500Mi
+            cpu: 200m
+          limits:
+            memory: 1000Mi
+            cpu: 400m
+        volumeMounts:
+        - name: activemq-config
+          mountPath: /opt/apache-activemq-5.16.2/conf/activemq.xml
+          subPath: activemq.xml
+        - name: jetty-cm
+          mountPath: /opt/apache-activemq-5.16.2/conf/jetty.xml
+          subPath: jetty.xml
+        - name: workdir
+          mountPath: /opt/apache-activemq-5.16.2/lib/optional/mysql-connector-java-8.0.26.jar
+          subPath: mysql-connector-java-8.0.26/mysql-connector-java-8.0.26.jar
+      volumes:
+      - name: activemq-config
+        configMap:
+          name: activemq-config
+          items:
+          - key: activemq.xml
+            path: activemq.xml
+      - name: jetty-cm
+        configMap:
+          name: jetty-cm
+          items:
+          - key: jetty.xml
+            path: jetty.xml
+      # - name: active-creds
+      #   secret:
+      #     secretName: creds
+      - name: workdir
+        emptyDir: {}
+      restartPolicy: Always
