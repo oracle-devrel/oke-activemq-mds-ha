@@ -1,19 +1,7 @@
 apiVersion: v1
 data:
-  jetty.xml: "    <!--\n        Licensed to the Apache Software Foundation (ASF) under
-    one or more contributor\n        license agreements. See the NOTICE file distributed
-    with this work for additional\n        information regarding copyright ownership.
-    The ASF licenses this file to You under\n        the Apache License, Version 2.0
-    (the \"License\"); you may not use this file except in\n        compliance with
-    the License. You may obtain a copy of the License at\n\n        http://www.apache.org/licenses/LICENSE-2.0
-    Unless required by applicable law or\n        agreed to in writing, software distributed
-    under the License is distributed on an\n        \"AS IS\" BASIS, WITHOUT WARRANTIES
-    OR CONDITIONS OF ANY KIND, either express or\n        implied. See the License
-    for the specific language governing permissions and\n        limitations under
-    the License.\n    -->\n    <!--\n        An embedded servlet engine for serving
-    up the Admin consoles, REST and Ajax APIs and\n        some demos Include this
-    file in your configuration to enable ActiveMQ web components\n        e.g. <import
-    resource=\"jetty.xml\"/>\n    -->\n<beans xmlns=\"http://www.springframework.org/schema/beans\"
+  jetty.xml:
+    <beans xmlns=\"http://www.springframework.org/schema/beans\"
     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xsi:schemaLocation=\"http://www.springframework.org/schema/beans
     http://www.springframework.org/schema/beans/spring-beans.xsd\">\n\n    <bean id=\"securityLoginService\"
     class=\"org.eclipse.jetty.security.HashLoginService\">\n        <property name=\"name\"
